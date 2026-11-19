@@ -130,8 +130,10 @@ function renderDistribution(out){
  const sorted=[...out].sort((a,b)=>b.score-a.score),sum=out.reduce((s,x)=>s+x.score,0)||1;
  const expected=out.reduce((s,x)=>s+ageMid(x.label)*x.score,0)/sum;
  const entropy=-out.reduce((s,x)=>x.score>0?s+(x.score/sum)*Math.log(x.score/sum):s,0)/Math.log(out.length);
- $('ageValue').textContent=Math.round(expected);
- $('ageSub').textContent='Expected value across 9 age classes · apparent age only';
+ const estimatedAge=Math.round(expected);
+ const lowerAge=Math.max(0,estimatedAge-5);
+ $('ageValue').textContent=`${lowerAge} - ${estimatedAge}`;
+ $('ageSub').textContent='Estimated apparent-age range';
  $('topClass').textContent=sorted[0].label;
  $('topScore').textContent=(sorted[0].score*100).toFixed(1)+'%';
  $('uncertainty').textContent=(entropy*100).toFixed(1)+'% normalized entropy';
