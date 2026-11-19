@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#06111b">
+<title>FACE / LAB — AI Facial Age & Landmark Analysis</title>
+<style>
+:root{--bg:#050c13;--panel:rgba(8,23,35,.88);--line:rgba(104,190,220,.28);--cyan:#53d9ff;--blue:#179dcc;--green:#53e39a;--muted:#8aa6b7;--white:#eaf7ff;--shadow:0 20px 60px #0008}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 42%,#123044 0,#081722 38%,#03080d 78%);color:var(--white);font:14px/1.45 Inter,Segoe UI,Arial,sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 28px;border-bottom:1px solid #8adfff20;background:#02091088;backdrop-filter:blur(18px);position:sticky;top:0;z-index:5}
+.brand{font-weight:800;letter-spacing:3px;font-size:17px}.brand span{color:var(--cyan)}.status{color:var(--green);font-size:11px;letter-spacing:1.4px}.status:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:9px;box-shadow:0 0 12px var(--green)}
+main{max-width:1600px;margin:auto;padding:24px;display:grid;grid-template-columns:minmax(250px,300px) minmax(380px,1fr) minmax(260px,310px);gap:18px}
+h1{font-size:22px;letter-spacing:1.3px;line-height:1.15;margin:0 0 20px}h1 span{color:#9edcf2}.panel{background:linear-gradient(145deg,#0b1b29ed,#06111beF);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:17px;margin-bottom:15px;backdrop-filter:blur(16px)}
+.panel-title{font-size:11px;letter-spacing:1.5px;color:#a8d7e9;font-weight:700;margin-bottom:14px}.metric{margin:13px 0}.metric-top{display:flex;justify-content:space-between;font-size:11px;color:#c6dce7;margin-bottom:6px}.bar{height:5px;background:#102b3b;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#087da9,var(--cyan));border-radius:9px;transition:width .7s}
+.center{min-width:0}.stage{height:590px;min-height:420px;position:relative;border:1px solid #63c9ed45;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at center,#17394a,#07131d 70%);box-shadow:0 20px 80px #0009}
+#preview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none}#mesh{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#85b3c7;text-align:center;padding:30px}.face-icon{width:150px;height:190px;border:1px solid #4bc7f455;border-radius:48% 48% 44% 44%;margin-bottom:20px;position:relative;box-shadow:0 0 50px #19b8e522,inset 0 0 35px #19b8e511}.face-icon:before{content:"";position:absolute;left:25%;right:25%;top:39%;height:1px;background:#62d9ff88;box-shadow:0 28px #62d9ff88,0 56px #62d9ff88}.face-icon:after{content:"";position:absolute;left:50%;top:20%;bottom:18%;width:1px;background:#62d9ff66}
+.scanline{position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 20px var(--cyan);opacity:0;pointer-events:none}.scanning .scanline{opacity:1;animation:scan 2.2s linear infinite}@keyframes scan{to{top:100%}}
+.corner{position:absolute;width:34px;height:34px;border-color:#6bdfff;border-style:solid;opacity:.8}.tl{top:18px;left:18px;border-width:2px 0 0 2px}.tr{top:18px;right:18px;border-width:2px 2px 0 0}.bl{bottom:18px;left:18px;border-width:0 0 2px 2px}.br{bottom:18px;right:18px;border-width:0 2px 2px 0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.btn{border:1px solid #39bde6;background:linear-gradient(120deg,#087da9,#07506f);color:white;padding:12px 17px;border-radius:9px;font-weight:700;cursor:pointer;letter-spacing:.3px}.btn.secondary{background:#0a1b28;border-color:#315b70;color:#c5e7f4}.btn:disabled{opacity:.45;cursor:not-allowed}.btn:hover{filter:brightness(1.18)}input[type=file]{display:none}
+.agebox{text-align:center;padding:20px 10px}.age-label{font-size:11px;letter-spacing:2px;color:#a8d7e9}.age{font-size:76px;line-height:1.1;color:var(--green);font-weight:800;text-shadow:0 0 30px #36e58a55}.years{color:var(--green);font-size:17px;letter-spacing:3px}.sub{font-size:11px;color:var(--muted);margin-top:10px}.bigstat{font-size:24px;color:var(--cyan);font-weight:700}.small{font-size:11px;color:var(--muted)}.distribution{display:grid;gap:8px}.distrow{display:grid;grid-template-columns:65px 1fr 38px;gap:8px;align-items:center;font-size:10px;color:#bdd2df}.distbar{height:6px;background:#102a38;border-radius:10px;overflow:hidden}.distbar i{display:block;height:100%;background:linear-gradient(90deg,#087da9,#57e0ff)}
+.note{font-size:10px;color:#7895a7;line-height:1.5}.warning{border-left:2px solid #e6b85c;padding:9px 11px;background:#b17b1912;color:#d7c59d;font-size:10px;line-height:1.5;border-radius:0 7px 7px 0}
+footer{text-align:center;color:#58798d;font-size:10px;padding:10px 24px 28px}.pill{display:inline-block;padding:4px 8px;border:1px solid #2a6075;border-radius:30px;color:#83d9f5;font-size:9px;letter-spacing:1px}
+#loading{color:#91d8ee;font-size:11px;margin-top:10px;min-height:17px}
+@media(max-width:1050px){main{grid-template-columns:1fr 1fr}.center{grid-column:1/-1;grid-row:1}.stage{height:min(70vh,600px)}}
+@media(max-width:650px){header{padding:15px}main{display:flex;flex-direction:column;padding:12px}.center{order:-1}.stage{height:480px;min-height:350px}.age{font-size:60px}}
+</style>
+</head>
+<body>
+<header><div class="brand">FACE <span>/</span> LAB <span style="font-weight:400;color:#85a7b8;font-size:10px;letter-spacing:1px"> INTELLIGENCE</span></div><div class="status" id="systemStatus">SYSTEM READY</div></header>
+<main>
+<section>
+<h1>FACIAL <span>ANALYSIS</span><br>CONSOLE</h1>
+<div class="panel"><div class="panel-title">FACE LANDMARK ANALYSIS</div>
+<div class="metric"><div class="metric-top"><span>LANDMARK DETECTION</span><b id="landmarkState">WAITING</b></div><div class="bar"><i id="landmarkBar"></i></div></div>
+<div class="metric"><div class="metric-top"><span>FACE MESH POINTS</span><b id="points">—</b></div></div>
+<div class="metric"><div class="metric-top"><span>FACE POSITION</span><b id="position">—</b></div></div>
+<div class="metric"><div class="metric-top"><span>IMAGE QUALITY</span><b id="quality">—</b></div><div class="bar"><i id="qualityBar"></i></div></div>
+</div>
+<div class="panel"><div class="panel-title">MODEL STATUS</div>
+<div class="metric"><div class="metric-top"><span>AGE CLASSIFIER</span><b id="ageModel">NOT LOADED</b></div></div>
+<div class="metric"><div class="metric-top"><span>FACE LANDMARKER</span><b id="faceModel">NOT LOADED</b></div></div>
+<div class="metric"><div class="metric-top"><span>INFERENCE TIME</span><b id="latency">—</b></div></div>
+<div id="loading">Ready. Load a photo or start the camera.</div>
+</div>
+<div class="panel"><div class="panel-title">INPUT GUIDANCE</div><div class="small">Use one front-facing face, neutral expression, even lighting and no heavy occlusion. The model works best on a clear, well-framed portrait.</div></div>
+</section>
+
+<section class="center">
+<div class="stage" id="stage">
+<div class="placeholder" id="placeholder"><div class="face-icon"></div><b>FACIAL SCAN VIEWPORT</b><p class="small">Upload a portrait or activate your camera to begin analysis.</p><span class="pill">LOCAL IN-BROWSER INFERENCE</span></div>
+<img id="preview" alt="Selected face preview"><canvas id="mesh"></canvas>
+<div class="scanline"></div><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+</div>
+<div class="controls">
+<label class="btn" for="fileInput">UPLOAD IMAGE</label><input id="fileInput" type="file" accept="image/*">
+<button class="btn secondary" id="cameraBtn">ACTIVATE CAMERA</button>
+<button class="btn" id="analyzeBtn" disabled>RUN AI ANALYSIS</button>
+<button class="btn secondary" id="stopBtn" disabled>STOP CAMERA</button>
+</div>
+<div class="small" style="margin-top:9px">Images are processed in this browser tab. No upload to an application server is performed by this page.</div>
+</section>
+
+<section>
+<div class="panel agebox"><div class="age-label">AI-ESTIMATED APPARENT AGE</div><div class="age" id="ageValue">—</div><div class="years">YEARS</div><div class="sub" id="ageSub">Awaiting model inference</div></div>
+<div class="panel"><div class="panel-title">AGE DISTRIBUTION · MODEL OUTPUT</div><div class="distribution" id="distribution"><div class="small">No inference yet.</div></div></div>
+<div class="panel"><div class="panel-title">MODEL INTERPRETATION</div><div class="metric"><div class="metric-top"><span>TOP CLASS</span><b id="topClass">—</b></div></div><div class="metric"><div class="metric-top"><span>TOP CLASS SCORE</span><b id="topScore">—</b></div></div><div class="metric"><div class="metric-top"><span>UNCERTAINTY</span><b id="uncertainty">—</b></div></div></div>
+<div class="warning">This is an estimate of apparent age from a face image, not biological age, health status, identity verification, or a medical assessment. Model performance can vary with age, skin tone, lighting, image quality and other factors. Do not use for consequential decisions.</div>
+</section>
+</main>
+<footer>FACE / LAB · EXPERIMENTAL COMPUTER VISION · CONSENT-BASED USE ONLY</footer>
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2';
+import { FilesetResolver, FaceLandmarker, DrawingUtils } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+
+const $=id=>document.getElementById(id);
+const fileInput=$('fileInput'), preview=$('preview'), mesh=$('mesh'), ctx=mesh.getContext('2d');
+let classifier=null, landmarker=null, stream=null, currentImage=null, lastResult=null;
+const setStatus=t=>$('systemStatus').textContent=t;
+const setLoading=t=>$('loading').textContent=t;
+function fitCanvas(){const r=$('stage').getBoundingClientRect();mesh.width=Math.round(r.width*devicePixelRatio);mesh.height=Math.round(r.height*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
+new ResizeObserver(fitCanvas).observe($('stage'));fitCanvas();
+
+async function loadModels(){
+  if(!landmarker){
+    setStatus('LOADING FACE MODEL');
+    const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    landmarker=await FaceLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'GPU'},runningMode:'IMAGE',numFaces:1,outputFaceBlendshapes:true});
+    $('faceModel').textContent='READY';
+  }
+  if(!classifier){
+    setStatus('LOADING AGE MODEL');
+    setLoading('Downloading ViT-B/16 age classifier (~88 MB, first run only)…');
+    classifier=await pipeline('image-classification','jdp8/vit-age-classifier',{device:'wasm'});
+    $('ageModel').textContent='READY';
+  }
+  setStatus('AI MODELS READY');setLoading('Models ready. Run analysis when your image is prepared.');
+}
+function setImage(src){preview.src=src;preview.style.display='block';$('placeholder').style.display='none';$('analyzeBtn').disabled=false;currentImage=preview;ctx.clearRect(0,0,mesh.width,mesh.height)}
+fileInput.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('image/'))return;const url=URL.createObjectURL(f);setImage(url);stopCamera();});
+$('cameraBtn').onclick=async()=>{
+ try{await loadModels();stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});const v=document.createElement('video');v.autoplay=true;v.playsInline=true;v.muted=true;v.srcObject=stream;await v.play();currentImage=v;preview.style.display='none';$('placeholder').style.display='none';$('analyzeBtn').disabled=false;$('stopBtn').disabled=false;$('cameraBtn').disabled=true;setStatus('CAMERA ACTIVE');$('loading').textContent='Camera active. Press RUN AI ANALYSIS to capture and analyze a frame.';window.liveVideo=v;}catch(e){setLoading('Camera/model error: '+e.message);setStatus('INPUT ERROR')}
+};
+function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}window.liveVideo=null;$('stopBtn').disabled=true;$('cameraBtn').disabled=false}
+$('stopBtn').onclick=stopCamera;
+function cropFace(source,landmarks){
+ const w=source.videoWidth||source.naturalWidth,h=source.videoHeight||source.naturalHeight;
+ const xs=landmarks.map(p=>p.x*w),ys=landmarks.map(p=>p.y*h);
+ let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+ const padX=(x1-x0)*.18,padY=(y1-y0)*.22;x0=Math.max(0,x0-padX);y0=Math.max(0,y0-padY);x1=Math.min(w,x1+padX);y1=Math.min(h,y1+padY);
+ const c=document.createElement('canvas');c.width=224;c.height=224;const g=c.getContext('2d');
+ const side=Math.max(x1-x0,y1-y0),cx=(x0+x1)/2,cy=(y0+y1)/2,sx=Math.max(0,cx-side/2),sy=Math.max(0,cy-side/2),sw=Math.min(side,w-sx),sh=Math.min(side,h-sy);
+ g.fillStyle='#777';g.fillRect(0,0,224,224);g.drawImage(source,sx,sy,sw,sh,0,0,224,224);return c;
+}
+function drawMesh(result,source){
+ fitCanvas();ctx.clearRect(0,0,mesh.width,mesh.height);
+ if(!result.faceLandmarks?.length)return;
+ const r=$('stage').getBoundingClientRect(),sw=source.videoWidth||source.naturalWidth,sh=source.videoHeight||source.naturalHeight;
+ const scale=Math.min(r.width/sw,r.height/sh),dw=sw*scale,dh=sh*scale,ox=(r.width-dw)/2,oy=(r.height-dh)/2;
+ const pts=result.faceLandmarks[0];ctx.save();ctx.translate(ox,oy);ctx.scale(scale,scale);
+ ctx.strokeStyle='rgba(75,218,255,.42)';ctx.lineWidth=1.0/scale;
+ const edges=FaceLandmarker.FACE_LANDMARKS_TESSELATION;
+ for(const e of edges){const a=pts[e.start],b=pts[e.end];ctx.beginPath();ctx.moveTo(a.x*sw,a.y*sh);ctx.lineTo(b.x*sw,b.y*sh);ctx.stroke()}
+ for(let i=0;i<pts.length;i+=5){ctx.fillStyle='#c4f7ff';ctx.beginPath();ctx.arc(pts[i].x*sw,pts[i].y*sh,1.1/scale,0,Math.PI*2);ctx.fill()}
+ ctx.restore();
+}
+function ageMid(label){if(label==='0-2')return 1;if(label==='3-9')return 6;if(label==='10-19')return 14.5;if(label==='20-29')return 24.5;if(label==='30-39')return 34.5;if(label==='40-49')return 44.5;if(label==='50-59')return 54.5;if(label==='60-69')return 64.5;return 75}
+function renderDistribution(out){
+ const sorted=[...out].sort((a,b)=>b.score-a.score),sum=out.reduce((s,x)=>s+x.score,0)||1;
+ const expected=out.reduce((s,x)=>s+ageMid(x.label)*x.score,0)/sum;
+ const entropy=-out.reduce((s,x)=>x.score>0?s+(x.score/sum)*Math.log(x.score/sum):s,0)/Math.log(out.length);
+ $('ageValue').textContent=Math.round(expected);
+ $('ageSub').textContent='Expected value across 9 age classes · apparent age only';
+ $('topClass').textContent=sorted[0].label;
+ $('topScore').textContent=(sorted[0].score*100).toFixed(1)+'%';
+ $('uncertainty').textContent=(entropy*100).toFixed(1)+'% normalized entropy';
+ $('distribution').innerHTML=out.map(x=>`<div class="distrow"><span>${x.label}</span><div class="distbar"><i style="width:${(x.score*100).toFixed(1)}%"></i></div><b>${(x.score*100).toFixed(1)}%</b></div>`).join('');
+}
+$('analyzeBtn').onclick=async()=>{
+ try{
+  $('analyzeBtn').disabled=true;$('stage').classList.add('scanning');setStatus('ANALYZING');await loadModels();
+  let source=window.liveVideo||preview;
+  if(window.liveVideo){const c=document.createElement('canvas');c.width=source.videoWidth;c.height=source.videoHeight;c.getContext('2d').drawImage(source,0,0);source=c}
+  const t0=performance.now(),face=landmarker.detect(source),elapsed=performance.now()-t0;
+  if(!face.faceLandmarks?.length)throw new Error('No face detected. Try a clear, front-facing portrait with better lighting.');
+  const pts=face.faceLandmarks[0];drawMesh(face,source);
+  $('landmarkState').textContent='DETECTED';$('landmarkBar').style.width='100%';$('points').textContent=pts.length+' POINTS';
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),width=Math.max(...xs)-Math.min(...xs),height=Math.max(...ys)-Math.min(...ys);
+  $('position').textContent=(width>.2&&height>.3)?'FRONTAL / VISIBLE':'CHECK ANGLE';
+  const crop=cropFace(source,pts),out=await classifier(crop,{top_k:9});
+  renderDistribution(out);$('latency').textContent=(performance.now()-t0).toFixed(0)+' ms';
+  const imageData=crop.getContext('2d').getImageData(0,0,224,224).data;let sum=0,sum2=0,n=0;
+  for(let i=0;i<imageData.length;i+=16){const y=.2126*imageData[i]+.7152*imageData[i+1]+.0722*imageData[i+2];sum+=y;sum2+=y*y;n++}
+  const sd=Math.sqrt(Math.max(0,sum2/n-(sum/n)**2)),q=Math.max(0,Math.min(100,Math.round((sd/75)*100)));
+  $('quality').textContent=q+'/100*';$('qualityBar').style.width=q+'%';
+  $('loading').textContent='Analysis complete. Age model output is shown as a probability distribution.';
+  setStatus('ANALYSIS COMPLETE');
+ }catch(e){setLoading(e.message);setStatus('ANALYSIS ERROR')}finally{$('analyzeBtn').disabled=false;$('stage').classList.remove('scanning')}
+};
+loadModels().catch(e=>{setStatus('MODEL LOAD PENDING');setLoading('Models load when needed. Check internet access. '+e.message)});
+</script>
+</body></html>
